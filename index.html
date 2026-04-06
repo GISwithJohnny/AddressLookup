@@ -214,6 +214,7 @@
 <script>
   var LAYER_URL = 'https://pwgis.chattanooga.gov/arcgis/rest/services/Misc/Addressing_FeatService/FeatureServer/0';
   var ADDRESS_FIELD = 'ADDRESS';
+  var _cbIndex = 0;
 
   document.getElementById('addressInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') doSearch();
@@ -249,6 +250,42 @@
     tbl.style.display = 'table';
   }
 
+  function jsonp(url, params, callback) {
+    var cbName = '__agscb' + (++_cbIndex);
+    var timeout;
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      document.head.removeChild(script);
+      callback(null, data);
+    };
+
+    params.callback = cbName;
+    params.f = 'json';
+
+    var qs = Object.keys(params).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+
+    var script = document.createElement('script');
+    script.src = url + '?' + qs;
+    script.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      document.head.removeChild(script);
+      callback(new Error('Script load failed — service may be unreachable.'));
+    };
+
+    timeout = setTimeout(function() {
+      delete window[cbName];
+      if (script.parentNode) document.head.removeChild(script);
+      callback(new Error('Request timed out after 10 seconds.'));
+    }, 10000);
+
+    document.head.appendChild(script);
+  }
+
   function doSearch() {
     var addr = document.getElementById('addressInput').value.trim();
     if (!addr) return;
@@ -258,40 +295,36 @@
     var escaped = addr.replace(/'/g, "''");
     var where = 'UPPER(' + ADDRESS_FIELD + ") = UPPER('" + escaped + "')";
 
-    var params = new URLSearchParams({
+    jsonp(LAYER_URL + '/query', {
       where: where,
       outFields: '*',
       returnGeometry: 'false',
-      resultRecordCount: '10',
-      f: 'json'
+      resultRecordCount: '10'
+    }, function(err, json) {
+      if (err) {
+        setStatus('error', 'Request failed', err.message);
+        return;
+      }
+      if (json.error) {
+        setStatus('error', 'Query error', json.error.message || 'An error occurred.');
+        return;
+      }
+      var features = json.features || [];
+      if (features.length === 0) {
+        setStatus('no-match', 'No match found', '"' + addr + '" was not found in the address layer.');
+      } else {
+        var label = features.length > 1
+          ? 'Match found (' + features.length + ' results)'
+          : 'Match found';
+        setStatus('match', label);
+        showFields(features[0]);
+        if (features.length > 1) {
+          var ml = document.getElementById('moreLink');
+          ml.textContent = '+ ' + (features.length - 1) + ' more result' + (features.length > 2 ? 's' : '') + ' \u2014 try a more specific address';
+          ml.style.display = 'block';
+        }
+      }
     });
-
-    fetch(LAYER_URL + '/query?' + params.toString())
-      .then(function(res) { return res.json(); })
-      .then(function(json) {
-        if (json.error) {
-          setStatus('error', 'Query error', json.error.message || 'An error occurred.');
-          return;
-        }
-        var features = json.features || [];
-        if (features.length === 0) {
-          setStatus('no-match', 'No match found', '"' + addr + '" was not found in the address layer.');
-        } else {
-          var label = features.length > 1
-            ? 'Match found (' + features.length + ' results)'
-            : 'Match found';
-          setStatus('match', label);
-          showFields(features[0]);
-          if (features.length > 1) {
-            var ml = document.getElementById('moreLink');
-            ml.textContent = '+ ' + (features.length - 1) + ' more result' + (features.length > 2 ? 's' : '') + ' \u2014 try a more specific address';
-            ml.style.display = 'block';
-          }
-        }
-      })
-      .catch(function(err) {
-        setStatus('error', 'Network error', err.message + '. Check that the service is publicly accessible.');
-      });
   }
 </script>
 </body>

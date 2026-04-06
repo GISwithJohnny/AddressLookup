@@ -102,84 +102,65 @@
     .result-card {
       border: 1px solid #ddddd8;
       border-radius: 8px;
-      padding: 1rem 1.125rem;
+      padding: 1.1rem 1.25rem;
       background: #fafaf8;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 56px;
     }
 
     .result-card.match    { border-color: #a8d07a; background: #f4faed; }
     .result-card.no-match { border-color: #f0c8c8; background: #fdf3f3; }
-    .result-card.error    { border-color: #f0c8c8; background: #fdf3f3; }
+    .result-card.error    { border-color: #e8dfc0; background: #fdfaf0; }
 
-    .result-status {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
+    .result-icon {
+      font-size: 22px;
+      line-height: 1;
       flex-shrink: 0;
-      background: #ccc;
+      margin-top: 1px;
+      display: none;
     }
 
-    .status-dot.loading  { background: #378ADD; animation: pulse 1s ease-in-out infinite; }
-    .status-dot.match    { background: #639922; }
-    .status-dot.no-match { background: #E24B4A; }
-    .status-dot.error    { background: #E24B4A; }
+    .result-body { flex: 1; }
 
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .result-headline {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      line-height: 1.4;
+    }
 
-    .status-text { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-    .result-card.match    .status-text { color: #3b6d11; }
-    .result-card.no-match .status-text { color: #a32d2d; }
-    .result-card.error    .status-text { color: #a32d2d; }
+    .result-card.match    .result-headline { color: #2d5a0e; }
+    .result-card.no-match .result-headline { color: #8b1f1f; }
+    .result-card.error    .result-headline { color: #7a6010; }
 
-    .status-sub {
+    .result-sub {
       font-size: 12.5px;
-      color: #666;
-      margin-top: 5px;
-      display: none;
-    }
-
-    .result-card.no-match .status-sub,
-    .result-card.error    .status-sub { color: #a32d2d; }
-
-    .fields-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 12px;
-      display: none;
-    }
-
-    .fields-table tr { border-top: 1px solid #d4eab8; }
-    .fields-table tr:first-child { border-top: none; }
-
-    .fields-table td {
-      padding: 5px 4px;
-      vertical-align: top;
-    }
-
-    .fields-table td:first-child {
-      color: #5a8a30;
-      width: 40%;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      padding-right: 10px;
-    }
-
-    .fields-table td:last-child {
-      color: #1a1a1a;
-      word-break: break-word;
-    }
-
-    .more-link {
-      font-size: 11.5px;
       color: #888;
-      margin-top: 10px;
+      margin-top: 3px;
       display: none;
+    }
+
+    .result-card.match    .result-sub { color: #4a8020; }
+    .result-card.no-match .result-sub { color: #a85050; }
+    .result-card.error    .result-sub { color: #8a7020; }
+
+    .loading-dots {
+      display: inline-block;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
     }
   </style>
 </head>
@@ -192,7 +173,7 @@
     </svg>
     Address Point Lookup
   </div>
-  <div class="app-subtitle">City of Chattanooga address points</div>
+  <div class="app-subtitle">Check if an address is within Chattanooga city limits</div>
 
   <div class="search-row">
     <input type="text" id="addressInput" placeholder="e.g. 100 E 11TH ST" />
@@ -200,13 +181,11 @@
   </div>
 
   <div class="result-card" id="resultCard">
-    <div class="result-status">
-      <div class="status-dot" id="statusDot"></div>
-      <span class="status-text" id="statusText">Enter an address to begin</span>
+    <div class="result-icon" id="resultIcon"></div>
+    <div class="result-body">
+      <div class="result-headline" id="resultHeadline">Enter an address above to check city limits.</div>
+      <div class="result-sub" id="resultSub"></div>
     </div>
-    <div class="status-sub" id="statusSub"></div>
-    <table class="fields-table" id="fieldsTable"></table>
-    <div class="more-link" id="moreLink"></div>
   </div>
 
 </div>
@@ -220,34 +199,32 @@
     if (e.key === 'Enter') doSearch();
   });
 
-  function setStatus(type, text, sub) {
-    document.getElementById('statusDot').className = 'status-dot ' + type;
-    document.getElementById('statusText').textContent = text;
-    var subEl = document.getElementById('statusSub');
-    subEl.style.display = sub ? 'block' : 'none';
-    if (sub) subEl.textContent = sub;
-    document.getElementById('fieldsTable').style.display = 'none';
-    document.getElementById('moreLink').style.display = 'none';
-    document.getElementById('resultCard').className = 'result-card' + (type ? ' ' + type : '');
-  }
+  function setResult(type, headline, sub) {
+    var card = document.getElementById('resultCard');
+    var icon = document.getElementById('resultIcon');
+    var hl   = document.getElementById('resultHeadline');
+    var sl   = document.getElementById('resultSub');
 
-  function showFields(feature) {
-    var tbl = document.getElementById('fieldsTable');
-    tbl.innerHTML = '';
-    var attrs = feature.attributes || {};
-    var skip = ['OBJECTID', 'objectid', 'Shape__Area', 'Shape__Length', 'GlobalID', 'globalid'];
-    var entries = Object.keys(attrs)
-      .filter(function(k) { return skip.indexOf(k) === -1; })
-      .map(function(k) { return [k, attrs[k]]; });
-    if (!entries.length) return;
-    entries.forEach(function(pair) {
-      var tr = document.createElement('tr');
-      var td1 = document.createElement('td'); td1.textContent = pair[0];
-      var td2 = document.createElement('td'); td2.textContent = (pair[1] !== null && pair[1] !== undefined) ? pair[1] : '—';
-      tr.appendChild(td1); tr.appendChild(td2);
-      tbl.appendChild(tr);
-    });
-    tbl.style.display = 'table';
+    card.className = 'result-card' + (type ? ' ' + type : '');
+
+    var icons = { match: '✓', 'no-match': '✕', error: '⚠', loading: '' };
+    if (icons[type]) {
+      icon.textContent = icons[type];
+      icon.style.display = 'block';
+    } else {
+      icon.style.display = 'none';
+    }
+
+    hl.innerHTML = type === 'loading'
+      ? 'Searching<span class="loading-dots"></span>'
+      : headline;
+
+    if (sub) {
+      sl.textContent = sub;
+      sl.style.display = 'block';
+    } else {
+      sl.style.display = 'none';
+    }
   }
 
   function jsonp(url, params, callback) {
@@ -274,13 +251,13 @@
       clearTimeout(timeout);
       delete window[cbName];
       document.head.removeChild(script);
-      callback(new Error('Script load failed — service may be unreachable.'));
+      callback(new Error('Script load failed.'));
     };
 
     timeout = setTimeout(function() {
       delete window[cbName];
       if (script.parentNode) document.head.removeChild(script);
-      callback(new Error('Request timed out after 10 seconds.'));
+      callback(new Error('Request timed out.'));
     }, 10000);
 
     document.head.appendChild(script);
@@ -290,39 +267,38 @@
     var addr = document.getElementById('addressInput').value.trim();
     if (!addr) return;
 
-    setStatus('loading', 'Searching\u2026');
+    setResult('loading');
 
     var escaped = addr.replace(/'/g, "''");
     var where = 'UPPER(' + ADDRESS_FIELD + ") = UPPER('" + escaped + "')";
 
     jsonp(LAYER_URL + '/query', {
       where: where,
-      outFields: '*',
+      outFields: ADDRESS_FIELD,
       returnGeometry: 'false',
-      resultRecordCount: '10'
+      resultRecordCount: '1'
     }, function(err, json) {
       if (err) {
-        setStatus('error', 'Request failed', err.message);
+        setResult('error', 'Something went wrong.', err.message);
         return;
       }
       if (json.error) {
-        setStatus('error', 'Query error', json.error.message || 'An error occurred.');
+        setResult('error', 'Something went wrong.', json.error.message || 'An unexpected error occurred.');
         return;
       }
       var features = json.features || [];
-      if (features.length === 0) {
-        setStatus('no-match', 'No match found', '"' + addr + '" was not found in the address layer.');
+      if (features.length > 0) {
+        setResult(
+          'match',
+          'Yes, this property is within Chattanooga city limits.',
+          'A matching address record was found in the city address point layer.'
+        );
       } else {
-        var label = features.length > 1
-          ? 'Match found (' + features.length + ' results)'
-          : 'Match found';
-        setStatus('match', label);
-        showFields(features[0]);
-        if (features.length > 1) {
-          var ml = document.getElementById('moreLink');
-          ml.textContent = '+ ' + (features.length - 1) + ' more result' + (features.length > 2 ? 's' : '') + ' \u2014 try a more specific address';
-          ml.style.display = 'block';
-        }
+        setResult(
+          'no-match',
+          'We could not find a matching address within city limits.',
+          'Double-check the spelling or try a nearby address. If you believe this is an error, please contact us.'
+        );
       }
     });
   }

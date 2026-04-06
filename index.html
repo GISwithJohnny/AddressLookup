@@ -179,7 +179,7 @@
   </div>
 
   <div class="search-row">
-    <input type="text" id="addressInput" placeholder="e.g. 100 E 11TH ST" />
+    <input type="text" id="addressInput" placeholder="e.g. 100 East Main St" />
     <button class="btn" onclick="doSearch()">Search</button>
   </div>
 
@@ -197,6 +197,56 @@
   var LAYER_URL = 'https://pwgis.chattanooga.gov/arcgis/rest/services/Misc/Addressing_FeatService/FeatureServer/0';
   var ADDRESS_FIELD = 'ADDRESS';
   var _cbIndex = 0;
+
+  // Normalization map: spoken/full form -> USPS abbreviation
+  // Each entry is [regex, replacement]
+  var REPLACEMENTS = [
+    // Directionals
+    [/\bnorth\b/g,     'N'],
+    [/\bsouth\b/g,     'S'],
+    [/\beast\b/g,      'E'],
+    [/\bwest\b/g,      'W'],
+    [/\bnortheast\b/g, 'NE'],
+    [/\bnorthwest\b/g, 'NW'],
+    [/\bsoutheast\b/g, 'SE'],
+    [/\bsouthwest\b/g, 'SW'],
+    // Street types
+    [/\bstreet\b/g,    'ST'],
+    [/\bavenue\b/g,    'AVE'],
+    [/\bboulevard\b/g, 'BLVD'],
+    [/\bdrive\b/g,     'DR'],
+    [/\broad\b/g,      'RD'],
+    [/\blane\b/g,      'LN'],
+    [/\bcourt\b/g,     'CT'],
+    [/\bcircle\b/g,    'CIR'],
+    [/\bplace\b/g,     'PL'],
+    [/\bway\b/g,       'WAY'],
+    [/\btrail\b/g,     'TRL'],
+    [/\bpike\b/g,      'PIKE'],
+    [/\bhighway\b/g,   'HWY'],
+    [/\bfreeway\b/g,   'FWY'],
+    [/\bparkway\b/g,   'PKWY'],
+    [/\bterrace\b/g,   'TER'],
+    [/\bpass\b/g,      'PASS'],
+    [/\bloop\b/g,      'LOOP'],
+    [/\balley\b/g,     'ALY'],
+    // Unit types
+    [/\bapartment\b/g, 'APT'],
+    [/\bsuite\b/g,     'STE'],
+    [/\bunit\b/g,      'UNIT'],
+    // Remove punctuation (periods, commas)
+    [/[.,#]/g,         ''],
+    // Collapse multiple spaces
+    [/\s{2,}/g,        ' ']
+  ];
+
+  function normalizeAddress(input) {
+    var s = input.trim();
+    for (var i = 0; i < REPLACEMENTS.length; i++) {
+      s = s.replace(REPLACEMENTS[i][0], REPLACEMENTS[i][1]);
+    }
+    return s.trim().toUpperCase();
+  }
 
   document.getElementById('addressInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') doSearch();
@@ -266,42 +316,67 @@
     document.head.appendChild(script);
   }
 
-  function doSearch() {
-    var addr = document.getElementById('addressInput').value.trim();
-    if (!addr) return;
-
-    setResult('loading');
-
-    var escaped = addr.replace(/'/g, "''");
-    var where = 'UPPER(' + ADDRESS_FIELD + ") = UPPER('" + escaped + "')";
-
+  function queryLayer(where, callback) {
     jsonp(LAYER_URL + '/query', {
       where: where,
       outFields: ADDRESS_FIELD,
       returnGeometry: 'false',
       resultRecordCount: '1'
-    }, function(err, json) {
-      if (err) {
-        setResult('error', 'Something went wrong.', err.message);
-        return;
-      }
-      if (json.error) {
-        setResult('error', 'Something went wrong.', json.error.message || 'An unexpected error occurred.');
-        return;
-      }
+    }, callback);
+  }
+
+  function doSearch() {
+    var raw  = document.getElementById('addressInput').value.trim();
+    if (!raw) return;
+
+    setResult('loading');
+
+    var normalized = normalizeAddress(raw);
+    var escaped    = normalized.replace(/'/g, "''");
+
+    // First try: exact match on normalized input
+    var exactWhere = ADDRESS_FIELD + " = '" + escaped + "'";
+
+    queryLayer(exactWhere, function(err, json) {
+      if (err) { setResult('error', 'Something went wrong.', err.message); return; }
+      if (json.error) { setResult('error', 'Something went wrong.', json.error.message); return; }
+
       var features = json.features || [];
+
       if (features.length > 0) {
+        // Exact match found
         setResult(
           'match',
           'Yes, this property is within Chattanooga city limits.',
           'A matching address record was found in the city address point layer.'
         );
       } else {
-        setResult(
-          'no-match',
-          'We could not find a matching address within city limits.',
-          'Double-check the spelling or try a nearby address. If you believe this is an error, please contact us.'
-        );
+        // Fallback: LIKE match on the house number + first word of street name
+        // e.g. "100 E MAIN ST" -> WHERE ADDRESS LIKE '100 E MAIN%'
+        var parts = escaped.split(' ');
+        var likePrefix = parts.slice(0, Math.min(3, parts.length)).join(' ');
+        var likeWhere = ADDRESS_FIELD + " LIKE '" + likePrefix + "%'";
+
+        queryLayer(likeWhere, function(err2, json2) {
+          if (err2) { setResult('error', 'Something went wrong.', err2.message); return; }
+          if (json2.error) { setResult('error', 'Something went wrong.', json2.error.message); return; }
+
+          var fallback = json2.features || [];
+
+          if (fallback.length > 0) {
+            setResult(
+              'match',
+              'Yes, this property is within Chattanooga city limits.',
+              'A matching address record was found in the city address point layer.'
+            );
+          } else {
+            setResult(
+              'no-match',
+              'We could not find a matching address within city limits.',
+              'Double-check the spelling or try a nearby address. If you believe this is an error, please contact us.'
+            );
+          }
+        });
       }
     });
   }

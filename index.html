@@ -26,16 +26,14 @@
       border-radius: 10px;
       padding: 1.75rem;
       width: 100%;
-      max-width: 580px;
+      max-width: 560px;
     }
 
     .app-title {
       font-size: 17px;
       font-weight: 600;
       color: #1a1a1a;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #ebebeb;
+      margin-bottom: 0.35rem;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -47,63 +45,12 @@
       flex-shrink: 0;
     }
 
-    .section-label {
-      font-size: 10.5px;
-      font-weight: 600;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
+    .app-subtitle {
+      font-size: 12.5px;
       color: #888;
-      margin-bottom: 10px;
-    }
-
-    .config-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
       margin-bottom: 1.5rem;
-    }
-
-    .field-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .field-wrap.full { grid-column: 1 / -1; }
-
-    label {
-      font-size: 12px;
-      color: #666;
-    }
-
-    input[type="text"],
-    select {
-      width: 100%;
-      height: 36px;
-      padding: 0 10px;
-      border: 1px solid #ddddd8;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      color: #1a1a1a;
-      background: #fafaf8;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    input[type="text"]:focus,
-    select:focus {
-      border-color: #378ADD;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
-    }
-
-    input[type="text"]::placeholder { color: #aaa; }
-
-    .divider {
-      border: none;
-      border-top: 1px solid #ebebeb;
-      margin: 0 0 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #ebebeb;
     }
 
     .search-row {
@@ -112,10 +59,30 @@
       margin-bottom: 1.25rem;
     }
 
-    .search-row input { flex: 1; }
+    .search-row input {
+      flex: 1;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid #ddddd8;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1a1a1a;
+      background: #fafaf8;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-row input:focus {
+      border-color: #378ADD;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
+    }
+
+    .search-row input::placeholder { color: #aaa; }
 
     .btn {
-      height: 36px;
+      height: 38px;
       padding: 0 18px;
       background: #1a7fb5;
       color: #fff;
@@ -139,9 +106,9 @@
       background: #fafaf8;
     }
 
-    .result-card.match  { border-color: #a8d07a; background: #f4faed; }
+    .result-card.match    { border-color: #a8d07a; background: #f4faed; }
     .result-card.no-match { border-color: #f0c8c8; background: #fdf3f3; }
-    .result-card.error  { border-color: #f0c8c8; background: #fdf3f3; }
+    .result-card.error    { border-color: #f0c8c8; background: #fdf3f3; }
 
     .result-status {
       display: flex;
@@ -164,12 +131,7 @@
 
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    .status-text {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a1a1a;
-    }
-
+    .status-text { font-size: 14px; font-weight: 600; color: #1a1a1a; }
     .result-card.match    .status-text { color: #3b6d11; }
     .result-card.no-match .status-text { color: #a32d2d; }
     .result-card.error    .status-text { color: #a32d2d; }
@@ -181,6 +143,9 @@
       display: none;
     }
 
+    .result-card.no-match .status-sub,
+    .result-card.error    .status-sub { color: #a32d2d; }
+
     .fields-table {
       width: 100%;
       border-collapse: collapse;
@@ -189,7 +154,7 @@
       display: none;
     }
 
-    .fields-table tr { border-top: 1px solid #e8e8e4; }
+    .fields-table tr { border-top: 1px solid #d4eab8; }
     .fields-table tr:first-child { border-top: none; }
 
     .fields-table td {
@@ -198,7 +163,7 @@
     }
 
     .fields-table td:first-child {
-      color: #888;
+      color: #5a8a30;
       width: 40%;
       font-family: 'Courier New', monospace;
       font-size: 11px;
@@ -210,31 +175,12 @@
       word-break: break-word;
     }
 
-    .match-count {
-      display: inline-block;
-      background: #d4edbc;
-      color: #3b6d11;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-left: 8px;
-    }
-
-    .toggle-config {
+    .more-link {
       font-size: 11.5px;
-      color: #1a7fb5;
-      cursor: pointer;
-      text-decoration: underline;
-      background: none;
-      border: none;
-      font-family: inherit;
-      padding: 0;
-      margin-bottom: 1rem;
-      display: block;
+      color: #888;
+      margin-top: 10px;
+      display: none;
     }
-
-    #configSection { display: block; }
   </style>
 </head>
 <body>
@@ -246,145 +192,105 @@
     </svg>
     Address Point Lookup
   </div>
+  <div class="app-subtitle">City of Chattanooga address points</div>
 
-  <button class="toggle-config" onclick="toggleConfig()">&#9881; Configure layer</button>
-
-  <div id="configSection">
-    <p class="section-label">Layer configuration</p>
-    <div class="config-grid">
-      <div class="field-wrap full">
-        <label>Feature layer URL</label>
-        <input type="text" id="layerUrl" placeholder="https://services.arcgis.com/…/FeatureServer/0" />
-      </div>
-      <div class="field-wrap">
-        <label>Address field name</label>
-        <input type="text" id="addressField" value="FULLADDRESS" placeholder="e.g. FULLADDRESS" />
-      </div>
-      <div class="field-wrap">
-        <label>Match type</label>
-        <select id="matchType">
-          <option value="exact">Exact (=)</option>
-          <option value="like">Contains (LIKE)</option>
-          <option value="upper">Exact, case-insensitive</option>
-        </select>
-      </div>
-    </div>
-    <hr class="divider" />
-  </div>
-
-  <p class="section-label">Address lookup</p>
   <div class="search-row">
-    <input type="text" id="addressInput" placeholder="Enter address to search…" />
+    <input type="text" id="addressInput" placeholder="e.g. 100 E 11TH ST" />
     <button class="btn" onclick="doSearch()">Search</button>
   </div>
 
   <div class="result-card" id="resultCard">
     <div class="result-status">
       <div class="status-dot" id="statusDot"></div>
-      <span class="status-text" id="statusText">Enter an address above to begin</span>
+      <span class="status-text" id="statusText">Enter an address to begin</span>
     </div>
     <div class="status-sub" id="statusSub"></div>
     <table class="fields-table" id="fieldsTable"></table>
+    <div class="more-link" id="moreLink"></div>
   </div>
 
 </div>
 
 <script>
-  var configVisible = true;
-
-  function toggleConfig() {
-    configVisible = !configVisible;
-    document.getElementById('configSection').style.display = configVisible ? 'block' : 'none';
-    document.querySelector('.toggle-config').textContent = configVisible ? '⚙ Hide configuration' : '⚙ Configure layer';
-  }
+  var LAYER_URL = 'https://pwgis.chattanooga.gov/arcgis/rest/services/Misc/Addressing_FeatService/FeatureServer/0';
+  var ADDRESS_FIELD = 'ADDRESS';
 
   document.getElementById('addressInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') doSearch();
   });
 
   function setStatus(type, text, sub) {
-    var dot = document.getElementById('statusDot');
-    dot.className = 'status-dot ' + type;
+    document.getElementById('statusDot').className = 'status-dot ' + type;
     document.getElementById('statusText').textContent = text;
     var subEl = document.getElementById('statusSub');
-    if (sub) { subEl.textContent = sub; subEl.style.display = 'block'; }
-    else { subEl.style.display = 'none'; }
+    subEl.style.display = sub ? 'block' : 'none';
+    if (sub) subEl.textContent = sub;
     document.getElementById('fieldsTable').style.display = 'none';
-    var card = document.getElementById('resultCard');
-    card.className = 'result-card ' + (type === 'match' ? 'match' : type === 'no-match' ? 'no-match' : type === 'error' ? 'error' : '');
+    document.getElementById('moreLink').style.display = 'none';
+    document.getElementById('resultCard').className = 'result-card' + (type ? ' ' + type : '');
   }
 
   function showFields(feature) {
     var tbl = document.getElementById('fieldsTable');
     tbl.innerHTML = '';
     var attrs = feature.attributes || {};
-    var skip = ['objectid', 'OBJECTID', 'Shape__Area', 'Shape__Length', 'shape__area', 'shape__length'];
+    var skip = ['OBJECTID', 'objectid', 'Shape__Area', 'Shape__Length', 'GlobalID', 'globalid'];
     var entries = Object.keys(attrs)
-      .filter(function(k) { return skip.indexOf(k) === -1 && skip.indexOf(k.toLowerCase()) === -1; })
+      .filter(function(k) { return skip.indexOf(k) === -1; })
       .map(function(k) { return [k, attrs[k]]; });
     if (!entries.length) return;
     entries.forEach(function(pair) {
       var tr = document.createElement('tr');
-      var td1 = document.createElement('td');
-      var td2 = document.createElement('td');
-      td1.textContent = pair[0];
-      td2.textContent = (pair[1] !== null && pair[1] !== undefined) ? pair[1] : '—';
-      tr.appendChild(td1);
-      tr.appendChild(td2);
+      var td1 = document.createElement('td'); td1.textContent = pair[0];
+      var td2 = document.createElement('td'); td2.textContent = (pair[1] !== null && pair[1] !== undefined) ? pair[1] : '—';
+      tr.appendChild(td1); tr.appendChild(td2);
       tbl.appendChild(tr);
     });
     tbl.style.display = 'table';
   }
 
   function doSearch() {
-    var url = document.getElementById('layerUrl').value.trim().replace(/\/$/, '');
-    var field = document.getElementById('addressField').value.trim();
     var addr = document.getElementById('addressInput').value.trim();
-    var matchType = document.getElementById('matchType').value;
+    if (!addr) return;
 
-    if (!url)  { setStatus('error', 'No layer URL', 'Paste a Feature Layer URL in the config above.'); return; }
-    if (!field){ setStatus('error', 'No field name', 'Enter the address field name in the config above.'); return; }
-    if (!addr) { setStatus('', 'Enter an address above to begin'); return; }
-
-    setStatus('loading', 'Searching…');
+    setStatus('loading', 'Searching\u2026');
 
     var escaped = addr.replace(/'/g, "''");
-    var whereClause;
-    if (matchType === 'like') {
-      whereClause = field + " LIKE '%" + escaped + "%'";
-    } else if (matchType === 'upper') {
-      whereClause = "UPPER(" + field + ") = UPPER('" + escaped + "')";
-    } else {
-      whereClause = field + " = '" + escaped + "'";
-    }
+    var where = 'UPPER(' + ADDRESS_FIELD + ") = UPPER('" + escaped + "')";
 
     var params = new URLSearchParams({
-      where: whereClause,
+      where: where,
       outFields: '*',
       returnGeometry: 'false',
-      resultRecordCount: '5',
+      resultRecordCount: '10',
       f: 'json'
     });
 
-    fetch(url + '/query?' + params.toString())
+    fetch(LAYER_URL + '/query?' + params.toString())
       .then(function(res) { return res.json(); })
       .then(function(json) {
         if (json.error) {
-          setStatus('error', 'Query error', json.error.message || JSON.stringify(json.error));
+          setStatus('error', 'Query error', json.error.message || 'An error occurred.');
           return;
         }
         var features = json.features || [];
         if (features.length === 0) {
-          setStatus('no-match', 'No match found', '"' + addr + '" was not found in the ' + field + ' field.');
+          setStatus('no-match', 'No match found', '"' + addr + '" was not found in the address layer.');
         } else {
-          var label = 'Match found';
-          if (features.length > 1) label += ' — ' + features.length + ' results';
+          var label = features.length > 1
+            ? 'Match found (' + features.length + ' results)'
+            : 'Match found';
           setStatus('match', label);
           showFields(features[0]);
+          if (features.length > 1) {
+            var ml = document.getElementById('moreLink');
+            ml.textContent = '+ ' + (features.length - 1) + ' more result' + (features.length > 2 ? 's' : '') + ' \u2014 try a more specific address';
+            ml.style.display = 'block';
+          }
         }
       })
       .catch(function(err) {
-        setStatus('error', 'Network error', err.message + '. Check that the service URL is correct and allows public access (CORS).');
+        setStatus('error', 'Network error', err.message + '. Check that the service is publicly accessible.');
       });
   }
 </script>
